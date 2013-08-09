@@ -1,20 +1,21 @@
 # Hudson::Remote::Cli
 
-TODO: Write a gem description
+hudson-remote-cli is ruby library to talk to Hudson's json remote access api
 
 ## Installation
 
 Add this line to your application's Gemfile:
 
-    gem 'hudson-remote-cli'
+    gem install hudson-remote-cli
 
-And then execute:
+## Configuration
 
-    $ bundle
+```ruby
+require 'hudson-remote-cli'
 
-Or install it yourself as:
-
-    $ gem install hudson-remote-cli
+# Manual Configuration
+Hudson[:url] = 'http
+```
 
 ## Usage
 
