@@ -1,4 +1,6 @@
-# Hudson::Remote::Cli
+[![Build Status](https://travis-ci.org/GuyCheung/hudson-remote-cli.png)](https://travis-ci.org/GuyCheung/hudson-remote-cli.png)
+
+# Hudson Remote Cli
 
 hudson-remote-cli is ruby library to talk to Hudson's json remote access api
 
