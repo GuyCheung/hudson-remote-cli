@@ -1,6 +1,6 @@
 module Hudson
   class Job < HudsonObject
-    attr_accessor :name
+    attr_reader :name
 
     class << self
       def create(name, config_path)
