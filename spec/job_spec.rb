@@ -1,16 +1,13 @@
 require 'spec_helper'
 
 module Hudson
-  describe Job do
+  describe Job, Build do
     let (:job_name) { 'hudson-remote-cli-test' }
     let (:job_conf) { File.join(File.dirname(__FILE__), 'config.xml') }
 
     describe '#create' do
       it 'should be a new job in test hudson' do
-        #Hudson::Job.create job_name, job_conf
-        puts '============================'
-        puts Hudson.jobs
-        puts '----------------------------'
+        Hudson::Job.create job_name, job_conf
         Hudson.jobs.include?(job_name).should be_true
       end
     end
@@ -18,6 +15,10 @@ module Hudson
     describe 'Job Actions' do
       before(:each) do
         @job = Hudson::Job.new(job_name)
+      end
+
+      it 'should be job_name' do
+        @job.name.should eq(job_name)
       end
 
       context 'job enable/disable test' do
@@ -47,11 +48,25 @@ module Hudson
           @last_number = @job.last_build
         end
 
-        it 'shoud be trigger a build' do
+        it 'should be trigger a build' do
           @job.build!
           last_number = @job.last_build
           (last_number - @last_number).should eq(1)
         end
+      end
+    end
+
+    describe 'build test' do
+      before(:each) do
+        @build = Hudson::Build.new(job_name)
+      end
+
+      it 'should be 1' do
+        @build.number.should eq(1)
+      end
+
+      it 'should be suit for the time in record' do
+        (10 - (@build.end_time - @build.start_time)).should < 2
       end
     end
 

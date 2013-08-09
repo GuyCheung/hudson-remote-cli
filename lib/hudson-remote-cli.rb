@@ -1,23 +1,36 @@
 require 'net/http'
 require 'net/https'
+require 'rack/utils'
 require 'zlib'
 require 'json'
 require 'hudson-remote-cli/version'
 require 'hudson-remote-cli/config'
 
 module Hudson
+  autoload :System, 'hudson-remote-cli/system'
+  autoload :BuildQueue, 'hudson-remote-cli/build_queue'
+  autoload :Job, 'hudson-remote-cli/job'
+  autoload :Build, 'hudson-remote-cli/build'
+
+  class APIError < StandardError; end
+
   class HudsonObject
-    def self.url_for(path)
-      File.join Hudson[:url], path
+    def self.uri_for(path, query = {})
+      uri = URI.parse(URI.encode(File.join(Hudson[:url], path)))
+      uri.query = Rack::Utils.build_query(query)
+      uri
     end
 
-    def url_for(path)
-      self.class.url_for(path)
+    def uri_for(path, query = {})
+      self.class.uri_for(path, query)
     end
 
     def self.load_json_api
+      @@_api_cache = Hash.new
+
       @@api_hudson = 'api/json'
       @@api_create_item = 'createItem'
+      @@api_overallLoad = 'overallLoad/api/json'
     end
 
     load_json_api
@@ -33,12 +46,8 @@ module Hudson
       end
     end
 
-    def self.get(url)
-      uri = URI.parse(URI.encode(url))
-      host = uri.host
-      port = uri.port
-      path = uri.path
-      request = Net::HTTP::Get.new(path)
+    def self.get(uri)
+      request = Net::HTTP::Get.new(uri.request_uri)
       request.basic_auth(Hudson[:user], Hudson[:password]) if
         Hudson[:user] and Hudson[:password]
       request['Content-Type'] = 'text/html'
@@ -53,37 +62,29 @@ module Hudson
         end
       else
         $stderr.puts response.body
-        raise APIError, "Error retrieving #{path}"
+        raise APIError, "Error retrieving #{uri.request_uri}"
       end
     end
 
-    def get(url)
-      self.class.get(url)
+    def get(uri)
+      self.class.get(uri)
     end
 
-    def self.send_post_request(url, data={})
-      uri = URI.parse(URI.encode(url))
-      host = uri.host
-      port = uri.port
-      path = uri.path
-      request = Net::HTTP::Post.new(path)
+    def self.send_post_request(uri, data={})
+      request = Net::HTTP::Post.new(uri.request_uri)
       request.basic_auth(Hudson[:user], Hudson[:password]) if
         Hudson[:user] and Hudson[:password]
       request.set_form_data(data)
       hudson_request(uri, request)
     end
 
-    def send_post_request(url, data={})
-      self.class.send_post_request(url, data)
+    def send_post_request(uri, data={})
+      self.class.send_post_request(uri, data)
     end
 
-    def self.send_xml_post_request(url, xml, data=nil)
-      uri = URI.parse(URI.encode(url))
-      host = uri.host
-      port = uri.port
-      path = uri.path
-      path = path+"?"+uri.query if uri.query
-      request = Net::HTTP::Post.new(path)
+    def self.send_xml_post_request(uri, xml, data=nil)
+      request = Net::HTTP::Post.new(uri.request_uri)
+      request['Content-Type'] = 'text/xml'
       request.basic_auth(Hudson[:user], Hudson[:password]) if
         Hudson[:user] and Hudson[:password]
       request.set_form_data(data) if data
@@ -91,19 +92,27 @@ module Hudson
       hudson_request(uri,request)
     end
 
-    def send_xml_post_request(url, xml, data=nil)
-      self.class.send_xml_post_request(url, xml, data)
+    def send_xml_post_request(uri, xml, data=nil)
+      self.class.send_xml_post_request(uri, xml, data)
     end
 
-    def self.api(api, refresh = false)
-      return @@api_cache[api] if @@api_cache.has_key?(api) and not refresh
-      json = get(url_for(api))
-      @@api_cache[api] = JSON.load(json)
-      @@api_cache[api]
+    def self.api_base(api, keys = nil, refresh = false)
+      cache_key = [api, keys.nil? ? '__ALL__' : keys].join '_'
+
+      return @@_api_cache[cache_key] if
+        @@_api_cache.has_key?(cache_key) and not refresh
+
+      json = get(uri_for(api, keys.nil? ? {} : {:tree => keys}))
+      @@_api_cache[cache_key] = JSON.load(json)
+      @@_api_cache[cache_key]
+    end
+
+    def api_base(api, keys = nil, refresh = false)
+      self.class.api_base(api, keys, refresh)
     end
   end
 
   def self.method_missing(method, *args, &block)
-    Hudson::System.call(method, *args, block)
+    Hudson::System.send(method, *args, block)
   end
 end

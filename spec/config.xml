@@ -169,7 +169,7 @@
         <originalValue class="hudson.util.DescribableList">
           <hudson.tasks.Shell>
             <command>echo nice
-sleep 60</command>
+sleep 10</command>
           </hudson.tasks.Shell>
         </originalValue>
         <propertyOverridden>false</propertyOverridden>
