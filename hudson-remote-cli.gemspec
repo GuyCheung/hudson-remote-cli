@@ -14,4 +14,6 @@ Gem::Specification.new do |gem|
   gem.name          = "hudson-remote-cli"
   gem.require_paths = ["lib"]
   gem.version       = Hudson::VERSION
+
+  gem.license = 'GPL-2'
 end
