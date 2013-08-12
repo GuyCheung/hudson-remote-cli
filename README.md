@@ -123,6 +123,12 @@ b = Hudson::Build.new('job_name', 142)
 # get all informations of the build
 b.api
 
+# get build description
+b.description
+
+# set build description
+b.description = 'some description'
+
 # get the result of this build
 b.result
 

@@ -36,7 +36,7 @@ module Hudson
       end
 
       context 'job description set/get' do
-        it 'shoud be "test success"' do
+        it 'should be "test success"' do
           @job.description = 'test success'
           @job.description.should eq('test success')
         end
@@ -67,6 +67,12 @@ module Hudson
 
       it 'should be suit for the time in record' do
         (10 - (@build.end_time - @build.start_time)).should < 2
+      end
+
+      it 'should be "haha, test success"' do
+        test_s = "haha, test success"
+        @build.description = test_s
+        @build.description.should eq(test_s)
       end
     end
 
